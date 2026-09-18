@@ -1,0 +1,78 @@
+MIGRATION SERVICES DATA HUB — SHAREPOINT + POWER AUTOMATE + NETLIFY
+
+PURPOSE
+The website is now a normal HTML/CSS/JavaScript site. app.js reads data/catalogue.json.
+Power Automate is responsible for rebuilding catalogue.json from the Excel table in SharePoint.
+When catalogue.json is committed to the website Git repository, Netlify automatically redeploys the site.
+
+DATA FLOW
+Migration Data Repo.xlsx (SharePoint)
+  -> Power Automate
+  -> List rows present in a table
+  -> Select/reshape columns
+  -> Build JSON
+  -> Update data/catalogue.json in the Git repository
+  -> Netlify deploys
+  -> Website shows the new/changed rows
+
+IMPORTANT EXCEL PREPARATION
+1. Open Migration Data Repo.xlsx in SharePoint.
+2. Click inside the dataset and confirm it is an Excel TABLE, not just cells.
+3. In Table Design, give the table a simple name, e.g. DataCatalogue.
+4. Keep one header row and no merged cells.
+5. Recommended headers used by the website:
+   Data_Title
+   Theme
+   Publisher
+   Description
+   Keywords
+   Geography
+   Latest_Available_Data
+   Data_Year
+   Update_Frequency
+   Data_Source_URL
+   Related_Dashboard_URL
+
+POWER AUTOMATE FLOW
+Trigger:
+- SharePoint: When a file is created or modified (properties only)
+- Site Address: Project-PerformanceandInsights
+- Library: the document library containing Migration Data Repo.xlsx
+- Use a trigger condition or Condition action so the flow continues only when File name with extension equals Migration Data Repo.xlsx.
+
+Actions:
+A. Delay 30 seconds (recommended so Excel has finished saving/syncing).
+B. Excel Online (Business): List rows present in a table
+   Location: your SharePoint site
+   Document Library: the library containing the workbook
+   File: Migration Data Repo.xlsx
+   Table: DataCatalogue
+   In Settings turn Pagination ON and choose a threshold above the expected catalogue size, e.g. 5000.
+C. Data Operations: Select
+   From: value from List rows present in a table
+   Map these JSON properties to Excel columns:
+     title -> Data_Title
+     theme -> Theme
+     publisher -> Publisher
+     description -> Description
+     keywords -> Keywords
+     geography -> Geography
+     latestAvailable -> Latest_Available_Data
+     year -> Data_Year
+     frequency -> Update_Frequency
+     source -> Data_Source_URL
+     dashboard -> Related_Dashboard_URL
+D. Compose the final JSON object with refreshedAt and items.
+E. Update data/catalogue.json in the PRIVATE Git repository used by Netlify. Use your organisation-approved GitHub/Azure DevOps connector or API action. Commit the new JSON content.
+F. Netlify detects the repository commit and redeploys automatically.
+
+WEBSITE
+app.js now calls:
+  ./data/catalogue.json?t=<timestamp>
+The timestamp prevents the browser from displaying an old cached copy.
+
+NOTES
+- Power Automate's SharePoint trigger watches the workbook FILE being modified; Excel Online does not provide a dependable generic 'new Excel row' trigger for this pattern. Filtering the file trigger to this workbook is therefore intentional.
+- If several people save the workbook rapidly, multiple flow runs can occur. In trigger Settings, enabling concurrency control with degree 1 is sensible.
+- If your council does not permit Power Automate to write to GitHub/Netlify, use an organisation-approved Azure DevOps repository or ask ICT for the approved destination. Do not put passwords, client secrets or tokens in app.js.
+- If the site contains internal/non-public data, confirm the website authentication/hosting arrangement with Coventry ICT before production use.
