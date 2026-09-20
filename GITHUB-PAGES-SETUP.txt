@@ -1,0 +1,61 @@
+COVENTRY MIGRATION DATA HUB — GITHUB PAGES HOSTING
+
+This repository can be hosted on BOTH Netlify and GitHub Pages.
+
+No change is required to the existing Netlify workflow.
+
+WHY THE WEBSITE CODE WORKS ON BOTH
+----------------------------------
+index.html uses relative paths such as:
+  ./styles.css
+  ./assets/...
+  ./app.js
+
+app.js reads:
+  ./data/catalogue.json?t=<timestamp>
+
+Relative paths are important because a GitHub project Pages site is normally
+served below the repository name, for example:
+  https://cvoki686.github.io/coventry-migration-data-hub/
+
+FILES ADDED FOR GITHUB PAGES
+----------------------------
+.nojekyll
+  Tells GitHub Pages to publish the repository as plain static files rather
+  than processing the site with Jekyll.
+
+404.html
+  Friendly fallback page for invalid URLs.
+
+GITHUB PAGES — SIMPLE BRANCH DEPLOYMENT
+---------------------------------------
+1. Open the repository on GitHub.
+2. Open Settings.
+3. In Code and automation, choose Pages.
+4. Under Build and deployment:
+     Source: Deploy from a branch
+     Branch: main
+     Folder: / (root)
+5. Click Save.
+6. Wait for GitHub Pages to finish its deployment.
+7. GitHub will display the live Pages URL.
+
+Because Power Automate already commits data/catalogue.json to main, those
+commits also update the GitHub Pages publishing source. Netlify can continue
+to deploy from the same main branch at the same time.
+
+EXPECTED FLOW
+-------------
+SharePoint Excel
+  -> Power Automate
+  -> GitHub main
+       -> Netlify
+       -> GitHub Pages
+
+IMPORTANT
+---------
+GitHub Pages publishes a static website. Treat everything deployed to the
+Pages site, including data/catalogue.json, as web-accessible content.
+
+The existing netlify.toml remains in the repository for Netlify. GitHub Pages
+does not need it.
