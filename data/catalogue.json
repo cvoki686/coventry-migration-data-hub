@@ -1,4 +1,9 @@
-{
-  "refreshedAt": null,
-  "items": []
-}
+json(
+    concat(
+        '{"refreshedAt":"',
+        utcNow(),
+        '","items":',
+        string(body('Select')),
+        '}'
+    )
+)
